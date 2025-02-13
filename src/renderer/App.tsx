@@ -1,39 +1,57 @@
 import { MemoryRouter as Router, Routes, Route } from 'react-router-dom';
-import icon from '../../assets/icon.svg';
+import { useState } from 'react';
+import bookLove from '../../assets/icons/bookLove.svg';
 import './App.css';
 
 function Hello() {
+  const [bookTitle, setBookTitle] = useState('');
+
+  const searchBookByISBN = async () => {
+    const isbn = (document.getElementById('myTextField') as HTMLInputElement)
+      .value;
+    if (!isbn) {
+      setBookTitle('Please enter an ISBN.');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`,
+      );
+      const data = await response.json();
+
+      if (data.totalItems > 0) {
+        const { title } = data.items[0].volumeInfo;
+        setBookTitle(`Title: ${title}`);
+      } else {
+        setBookTitle('No book found with this ISBN.');
+      }
+    } catch (error) {
+      setBookTitle('Error fetching book data.');
+    }
+  };
+
+  document.getElementById('submitButton')?.addEventListener('click', () => {
+    const textField = (
+      document.getElementById('myTextField') as HTMLInputElement
+    )?.value;
+    document.getElementById('output')!.innerText = `You entered: ${textField}`;
+  });
+
   return (
     <div>
       <div className="Hello">
-        <img width="200" alt="icon" src={icon} />
+        <img width="200" alt="icon" src={bookLove} />
       </div>
-      <h1>electron-react-boilerplate</h1>
-      <div className="Hello">
-        <a
-          href="https://electron-react-boilerplate.js.org/"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="books">
-              📚
-            </span>
-            Read our docs
+      <div className="body">
+        <h1>Search for your book title by ISBN:</h1>
+        <div className="search-container">
+          <input type="text" id="myTextField" placeholder="Enter ISBN here" />
+          <button type="button" onClick={searchBookByISBN}>
+            Search
           </button>
-        </a>
-        <a
-          href="https://github.com/sponsors/electron-react-boilerplate"
-          target="_blank"
-          rel="noreferrer"
-        >
-          <button type="button">
-            <span role="img" aria-label="folded hands">
-              🙏
-            </span>
-            Donate
-          </button>
-        </a>
+          <p id="output">{bookTitle}</p>
+        </div>
       </div>
     </div>
   );
